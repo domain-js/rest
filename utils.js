@@ -1,12 +1,25 @@
 function Utils(cnf, deps) {
   const {
-    errors,
-    _,
-    moment,
-    mysql,
-    Sequelize,
-    U: { relativeDays }
-  } = deps;
+    rest: { relativeMaxRangeDays: RELATIVE_MAX_RANGE = 100 }
+  } = cnf;
+
+  const { errors, _, moment, mysql, Sequelize } = deps;
+
+  /**
+   * 相对多少天的时间
+   * @param Number days 相对多少天
+   * @params Boolean [isStart] 是否是开始, 默认true， false 返回结束时间
+   *
+   * @return Date
+   */
+  const relativeDays = (days, isStart = true) => {
+    const now = Date.now();
+    const ms = now + days * 86400000;
+
+    const offset = (isStart ? 0 : 86400000) - (now % 86400000);
+
+    return new Date(ms + offset);
+  };
 
   const NUMBER_TYPES = new Set(["INTEGER", "FLOAT"]);
   const pickParams = (params, cols, Model, isAdmin) => {
@@ -164,7 +177,6 @@ function Utils(cnf, deps) {
     };
   };
 
-  const RELATIVE_MAX_RANGE = 100;
   const RELATIVE_RANGE_ERROR = errors.notAllowed(`相对时间跨度最多 ${RELATIVE_MAX_RANGE} 天`);
   // findOptFilter 的处理
   const findOptFilter = (params, name, where, Op, col = name) => {
