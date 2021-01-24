@@ -3,7 +3,7 @@ function Utils(cnf, deps) {
     rest: { relativeMaxRangeDays: RELATIVE_MAX_RANGE = 100 }
   } = cnf;
 
-  const { errors, _, moment, mysql, Sequelize } = deps;
+  const { errors, _, moment, Sequelize } = deps;
 
   /**
    * 相对多少天的时间
@@ -119,9 +119,11 @@ function Utils(cnf, deps) {
         _.map(q, x => {
           const arr = _.map(conf.match, match => {
             const v = match.replace("{1}", x);
-            return [`(\`${as || Model.name}\`.\`${col}\``, conf.op, `${mysql.escape(v)})`].join(
-              " "
-            );
+            return [
+              `(\`${as || Model.name}\`.\`${col}\``,
+              conf.op,
+              `${Model.sequelize.escape(v)})`
+            ].join(" ");
           });
           return `(${arr.join(" OR ")})`;
         })
