@@ -11,10 +11,7 @@
     "type": "git",
     "url": "git+ssh://git@github.com/domain-js/helper.rest/.git"
   },
-  "keywords": [
-    "helper.rest",
-    "domain.js"
-  ],
+  "keywords": ["helper.rest", "domain.js"],
   "author": "Redstone Zhao",
   "license": "MIT",
   "bugs": {
@@ -22,9 +19,8 @@
   },
   "homepage": "https://github.com/domain-js/helper.rest#readme",
   "devDependencies": {
-    "jest": "^24.9.0"
-  },
-  "dependencies": {
-    "lodash": "^4.17.20"
+    "jest": "^24.9.0",
+    "lodash": "^4.17.20",
+    "sequelize": "^6.4.0"
   }
 }
