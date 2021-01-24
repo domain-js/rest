@@ -1,0 +1,30 @@
+{
+  "name": "@domain.js/helper.rest",
+  "version": "0.1.0",
+  "description": "domain.js helper.rest 通用模块",
+  "main": "index.js",
+  "scripts": {
+    "test": "export NODE_ENV=test && jest ./__test__ --coverage",
+    "test:watch": "export NODE_ENV=test && jest ./__test__ --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/domain-js/helper.rest/.git"
+  },
+  "keywords": [
+    "helper.rest",
+    "domain.js"
+  ],
+  "author": "Redstone Zhao",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/domain-js/helper.rest/issues"
+  },
+  "homepage": "https://github.com/domain-js/helper.rest#readme",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.20"
+  }
+}
