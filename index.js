@@ -1,3 +1,4 @@
+const Before = require("./Before");
 const Stats = require("./stats");
 
 function Main(cnf, deps, utils) {
@@ -77,5 +78,6 @@ function Main(cnf, deps, utils) {
 }
 
 Main.Deps = ["errors", "_", "moment", "Sequelize"];
+Main.Before = Before;
 
 module.exports = Main;
