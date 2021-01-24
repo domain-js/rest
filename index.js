@@ -1,3 +1,5 @@
+const Stats = require("./stats");
+
 function Main(cnf, deps, utils) {
   const { _, errors } = deps;
   const { findAllOpts, pickParams } = utils;
@@ -71,9 +73,9 @@ function Main(cnf, deps, utils) {
     return { count, rows };
   };
 
-  return { modify, add, remove, list };
+  return { modify, add, remove, list, stats: Stats(cnf, deps, utils) };
 }
 
-Main.Deps = ["logger", "errors", "_", "moment", "mysql", "Sequelize"];
+Main.Deps = ["errors", "_", "moment", "mysql", "Sequelize"];
 
 module.exports = Main;

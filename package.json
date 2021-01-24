@@ -1,7 +1,7 @@
 {
-  "name": "@domain.js/helper.rest",
+  "name": "@domain.js/rest",
   "version": "0.1.0",
-  "description": "domain.js helper.rest 通用模块",
+  "description": "domain.js rest 通用模块",
   "main": "index.js",
   "scripts": {
     "test": "export NODE_ENV=test && jest ./__test__ --coverage",
@@ -9,15 +9,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/domain-js/helper.rest/.git"
+    "url": "git+ssh://git@github.com/domain-js/rest/.git"
   },
-  "keywords": ["helper.rest", "domain.js"],
+  "keywords": ["rest", "domain.js"],
   "author": "Redstone Zhao",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/domain-js/helper.rest/issues"
+    "url": "https://github.com/domain-js/rest/issues"
   },
-  "homepage": "https://github.com/domain-js/helper.rest#readme",
+  "homepage": "https://github.com/domain-js/rest#readme",
   "devDependencies": {
     "jest": "^24.9.0",
     "lodash": "^4.17.20",
