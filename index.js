@@ -43,7 +43,7 @@ function Main(cnf, deps, utils) {
     return model.save();
   };
 
-  const TRASH_OPT = { fields: ["isDeleted"] };
+  const TRASH_OPT = { fields: ["isDeleted", "deletorId"] };
   const remove = async (model, userId) => {
     // 未开启回收站，直接删除
     if (!model.isDeleted) return model.destroy();
