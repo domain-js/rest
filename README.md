@@ -19,8 +19,9 @@ Domain.js 项目通用增删改查模块
 | errors.resourceDuplicateAdd | Function | rest.add 方法遇到资源重复是会调用改函数返回错误 |
 | errors.notAllowed | Function | rest.list 方法相对时间过滤超过最大天数跨度调用该函数返回错误 |
 | _| Object | lodash 库包，之所以通过注入的方式是为把版本控制的主动权交给项目 |
-
-Main.Deps = ["logger", "errors", "_", "moment", "mysql", "Sequelize"];
+| Sequelize_| Object | sequelize 库包，之所以通过注入的方式是为把版本控制的主动权交给项目 |
+| moment | Object | moment 库包，之所以通过注入的方式是为把版本控制的主动权交给项目 |
+| mysql | Object | mysql2 库包，之所以通过注入的方式是为把版本控制的主动权交给项目 |
 
 # Usage
 | 功能 | 描述 | 样例 |

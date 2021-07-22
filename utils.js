@@ -1,9 +1,9 @@
 function Utils(cnf, deps) {
   const {
-    rest: { relativeMaxRangeDays: RELATIVE_MAX_RANGE = 100 }
+    rest: { relativeMaxRangeDays: RELATIVE_MAX_RANGE = 100 },
   } = cnf;
 
-  const { errors, _, moment, Sequelize } = deps;
+  const { mysql, errors, _, moment, Sequelize } = deps;
 
   /**
    * 相对多少天的时间
@@ -26,7 +26,7 @@ function Utils(cnf, deps) {
     const attr = {};
     const { rawAttributes, onlyAdminCols } = Model;
 
-    _.each(cols, x => {
+    _.each(cols, (x) => {
       if (!_.has(params, x)) return;
       if (!_.has(rawAttributes, x)) return;
       const C = rawAttributes[x];
@@ -52,14 +52,14 @@ function Utils(cnf, deps) {
   };
 
   // 处理排序参数
-  const sort = (params, conf) => {
+  const sort = (params, conf, includes) => {
     const value = params._sort;
     if (!conf) return undefined;
     if (!(value || conf.default)) return undefined;
 
     if (!value) return [[conf.default, conf.defaultDirection || "ASC"]];
 
-    const orders = value.split(",").map(x => {
+    const orders = value.split(",").map((x) => {
       const isDesc = x[0] === "-";
 
       const direction = isDesc ? "DESC" : "ASC";
@@ -68,9 +68,22 @@ function Utils(cnf, deps) {
       // 如果请求的排序方式不允许，则返回null
       if (!conf.allow || !_.includes(conf.allow, order)) return undefined;
 
-      return [order, direction];
-    });
+      const theOrder = order.split(".");
+      // 处理使用模型名称作为关联名称按关联模型的 字段 排序
+      if (theOrder.length === 2) {
+        if (includes && Array.isArray(params._includes)) {
+          const ret = _.filter(params._includes, (val) => includes[val]);
+          if (!ret.includes(theOrder[0])) {
+            return undefined;
+          }
+        } else {
+          return undefined;
+        }
+      }
 
+      theOrder.push(direction);
+      return theOrder;
+    });
     return _.compact(orders);
   };
 
@@ -116,17 +129,15 @@ function Utils(cnf, deps) {
       if (!searchs && as) return;
       if (searchs && searchs.length && !_.includes(searchs, _col)) return;
       ors.push(
-        _.map(q, x => {
-          const arr = _.map(conf.match, match => {
+        _.map(q, (x) => {
+          const arr = _.map(conf.match, (match) => {
             const v = match.replace("{1}", x);
-            return [
-              `(\`${as || Model.name}\`.\`${col}\``,
-              conf.op,
-              `${Model.sequelize.escape(v)})`
-            ].join(" ");
+            return [`(\`${as || Model.name}\`.\`${col}\``, conf.op, `${mysql.escape(v)})`].join(
+              " ",
+            );
           });
           return `(${arr.join(" OR ")})`;
-        })
+        }),
       );
     });
     return ors;
@@ -136,17 +147,17 @@ function Utils(cnf, deps) {
   // 将单个或多个 searchOpt 返回的数组正确的合并成 where 子句, 字符串类型的
   // 这个函数的目的是为了正确的使每个关键词之间的关系是 AND 的关系
   // 单个关键词在不同的搜索字段之间是 OR 的关系
-  const mergeSearchOrs = orss => {
+  const mergeSearchOrs = (orss) => {
     const ands = [];
-    _.each(orss, _orss => {
-      _.each(_orss, ors => {
+    _.each(orss, (_orss) => {
+      _.each(_orss, (ors) => {
         _.each(ors, (_or, index) => {
           if (!ands[index]) ands[index] = [];
           ands[index].push(_or);
         });
       });
     });
-    const andsStr = _.map(ands, x => `(${x.join(" OR ")})`);
+    const andsStr = _.map(ands, (x) => `(${x.join(" OR ")})`);
     return `(${andsStr.join(" AND ")})`;
   };
 
@@ -157,16 +168,16 @@ function Utils(cnf, deps) {
   const modelInclude = (params, includes) => {
     if (!includes) return undefined;
     if (!Array.isArray(params._includes)) return undefined;
-    const ret = _.filter(params._includes, x => includes[x]);
+    const ret = _.filter(params._includes, (x) => includes[x]);
     if (ret.length === 0) return undefined;
     // 这里之所以要用 _.clone 是为了防止修改了原始了配置信息，从而导致不同请求之间的干扰
-    return _.map(ret, x => _.clone(includes[x]));
+    return _.map(ret, (x) => _.clone(includes[x]));
   };
 
   const DEFAULT_PAGE_PARAMS = Object.freeze({
     maxResults: 10,
     maxStartIndex: 100000,
-    maxResultsLimit: 100000
+    maxResultsLimit: 100000,
   });
 
   const pageParams = (pagination, params) => {
@@ -175,7 +186,7 @@ function Utils(cnf, deps) {
     const maxResults = Math.max(params._maxResults | 0 || _pagination.maxResults, 1);
     return {
       offset: Math.min(startIndex, _pagination.maxStartIndex),
-      limit: Math.min(maxResults, _pagination.maxResultsLimit)
+      limit: Math.min(maxResults, _pagination.maxResultsLimit),
     };
   };
 
@@ -194,8 +205,8 @@ function Utils(cnf, deps) {
       ignoreYear = ignoreYear === "yes";
       if (RELATIVE_MAX_RANGE < end - start) throw RELATIVE_RANGE_ERROR;
       if (!where[col]) where[col] = {};
+      if (!where[col][Op.and]) where[col][Op.and] = [];
       if (ignoreYear) {
-        if (!where[col][Op.and]) where[col][Op.and] = [];
         // 忽略年，这里要处理跨年的问题
         const startDate = moment(Date.now() + start * 86400000).format("MM-DD");
         const endDate = moment(Date.now() + end * 86400000).format("MM-DD");
@@ -203,28 +214,32 @@ function Utils(cnf, deps) {
           where[col][Op.and].push({
             [Op.or]: [
               Sequelize.where(
-                Sequelize.fn("DATE_FORMAT", Sequelize.col(col), "%m-%d"),
+                Sequelize.fn("DATE_FORMAT", Sequelize.col(name), "%m-%d"),
                 Op.between,
-                Sequelize.literal(`'${startDate}' AND '12-31'`)
+                Sequelize.literal(`'${startDate}' AND '12-31'`),
               ),
               Sequelize.where(
-                Sequelize.fn("DATE_FORMAT", Sequelize.col(col), "%m-%d"),
+                Sequelize.fn("DATE_FORMAT", Sequelize.col(name), "%m-%d"),
                 Op.between,
-                Sequelize.literal(`'01-01' AND '${endDate}'`)
-              )
-            ]
+                Sequelize.literal(`'01-01' AND '${endDate}'`),
+              ),
+            ],
           });
         } else {
           where[col][Op.and].push(
             Sequelize.where(
-              Sequelize.fn("DATE_FORMAT", Sequelize.col(col), "%m-%d"),
+              Sequelize.fn("DATE_FORMAT", Sequelize.col(name), "%m-%d"),
               Op.between,
-              Sequelize.literal(`'${startDate}' AND '${endDate}'`)
-            )
+              Sequelize.literal(`'${startDate}' AND '${endDate}'`),
+            ),
           );
         }
       } else {
-        where[col][Op.between] = [relativeDays(start), relativeDays(end, false)];
+        where[col][Op.and].push(
+          Sequelize.where(Sequelize.fn("DATE", Sequelize.col(name)), {
+            [Op.between]: [relativeDays(start), relativeDays(end, false)],
+          }),
+        );
       }
     }
 
@@ -287,7 +302,7 @@ function Utils(cnf, deps) {
     if (_.isString(params[`${name}_likes`])) {
       const likes = params[`${name}_likes`].trim().split(",");
       if (!where[col]) where[col] = {};
-      where[col][Op.or] = likes.map(x => {
+      where[col][Op.or] = likes.map((x) => {
         value = x.trim().replace(/\*/g, "%");
         return { [Op.like]: value };
       });
@@ -301,7 +316,7 @@ function Utils(cnf, deps) {
     }
 
     // 处理大于，小于, 大于等于，小于等于的判断
-    _.each(["gt", "gte", "lt", "lte"], x => {
+    _.each(["gt", "gte", "lt", "lte"], (x) => {
       const c = `${name}_${x}`;
       if (!_.isString(params[c]) && !_.isNumber(params[c])) return;
       value = _.isString(params[c]) ? params[c].trim() : params[c];
@@ -318,8 +333,8 @@ function Utils(cnf, deps) {
         Sequelize.where(
           Sequelize.fn("FIND_IN_SET", params[`${name}_ins`], Sequelize.col(name)),
           Op.gte,
-          1
-        )
+          1,
+        ),
       );
     }
 
@@ -329,7 +344,7 @@ function Utils(cnf, deps) {
       if (!where[col][Op.and]) where[col][Op.and] = [];
       for (const v of params[`${name}_ins_and`].split(",")) {
         where[col][Op.and].push(
-          Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.gte, 1)
+          Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.gte, 1),
         );
       }
     }
@@ -341,9 +356,9 @@ function Utils(cnf, deps) {
       where[col][Op.and].push({
         [Op.or]: params[`${name}_ins_or`]
           .split(",")
-          .map(v =>
-            Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.gte, 1)
-          )
+          .map((v) =>
+            Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.gte, 1),
+          ),
       });
     }
 
@@ -353,7 +368,7 @@ function Utils(cnf, deps) {
       if (!where[col][Op.and]) where[col][Op.and] = [];
       for (const v of params[`${name}_ins_not`].split(",")) {
         where[col][Op.and].push(
-          Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.lt, 1)
+          Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.lt, 1),
         );
       }
     }
@@ -363,13 +378,13 @@ function Utils(cnf, deps) {
   const findAllOpts = (Model, params) => {
     const {
       sequelize: {
-        Sequelize: { Op }
-      }
+        Sequelize: { Op },
+      },
     } = Model;
     const where = {};
     const searchOrs = [];
     const includes = modelInclude(params, Model.includes);
-    _.each(Model.filterAttrs || _.keys(Model.rawAttributes), name => {
+    _.each(Model.filterAttrs || _.keys(Model.rawAttributes), (name) => {
       findOptFilter(params, name, where, Op);
     });
     if (Model.rawAttributes.isDeleted && !params._showDeleted) {
@@ -382,10 +397,10 @@ function Utils(cnf, deps) {
     // 处理关联资源的过滤条件
     // 以及关联资源允许返回的字段
     if (includes) {
-      _.each(includes, x => {
+      _.each(includes, (x) => {
         const includeWhere = {};
         const filterAttrs = x.model.filterAttrs || _.keys(x.model.rawAttributes);
-        _.each(filterAttrs, name => {
+        _.each(filterAttrs, (name) => {
           findOptFilter(params, `${x.as}.${name}`, includeWhere, Op, name);
         });
         if (x.model.rawAttributes.isDeleted && !params._showDeleted) {
@@ -405,10 +420,10 @@ function Utils(cnf, deps) {
 
     const ret = {
       include: includes,
-      order: sort(params, Model.sort)
+      order: sort(params, Model.sort, Model.includes),
     };
     // 将 searchOrs 赋到 where 上
-    const _searchOrs = _.filter(_.compact(searchOrs), x => x.length);
+    const _searchOrs = _.filter(_.compact(searchOrs), (x) => x.length);
 
     if (_.size(where)) {
       if (_searchOrs.length) {
@@ -425,7 +440,7 @@ function Utils(cnf, deps) {
       const { _attrs } = params;
       if (!_attrs) return;
       if (!Array.isArray(_attrs) || !_attrs.length) return;
-      ret.attributes = _attrs.filter(x => Model.rawAttributes[x]);
+      ret.attributes = _attrs.filter((x) => Model.rawAttributes[x]);
     })();
 
     Object.assign(ret, pageParams(Model.pagination, params));
@@ -436,7 +451,7 @@ function Utils(cnf, deps) {
   return Object.freeze({
     pickParams,
     findAllOpts,
-    pageParams
+    pageParams,
   });
 }
 

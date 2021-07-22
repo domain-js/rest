@@ -1,6 +1,6 @@
 {
   "name": "@domain.js/rest",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "domain.js rest 通用模块",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,10 @@
     "type": "git",
     "url": "git+ssh://git@github.com/domain-js/rest/.git"
   },
-  "keywords": ["rest", "domain.js"],
+  "keywords": [
+    "rest",
+    "domain.js"
+  ],
   "author": "Redstone Zhao",
   "license": "MIT",
   "bugs": {

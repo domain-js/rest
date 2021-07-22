@@ -77,7 +77,7 @@ function Main(cnf, deps, utils) {
   return { modify, add, remove, list, stats: Stats(cnf, deps, utils) };
 }
 
-Main.Deps = ["errors", "_", "moment", "Sequelize"];
+Main.Deps = ["mysql", "errors", "_", "moment", "Sequelize"];
 Main.Before = Before;
 
 module.exports = Main;
