@@ -1,3 +1,4 @@
+const mysql = require("mysql2");
 const Before = require("./Before");
 const Stats = require("./stats");
 
@@ -77,7 +78,7 @@ function Main(cnf, deps, utils) {
   return { modify, add, remove, list, stats: Stats(cnf, deps, utils) };
 }
 
-Main.Deps = ["mysql", "errors", "_", "moment", "Sequelize"];
+Main.Deps = ["errors", "_", "moment", "Sequelize"];
 Main.Before = Before;
 
 module.exports = Main;

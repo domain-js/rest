@@ -1,6 +1,6 @@
 {
   "name": "@domain.js/rest",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "domain.js rest 通用模块",
   "main": "index.js",
   "scripts": {
@@ -25,5 +25,8 @@
     "jest": "^24.9.0",
     "lodash": "^4.17.20",
     "sequelize": "^6.4.0"
+  },
+  "dependencies": {
+    "mysql2": "*"
   }
 }
