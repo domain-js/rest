@@ -1,4 +1,3 @@
-const mysql = require("mysql2");
 const Before = require("./Before");
 const Stats = require("./stats");
 
@@ -18,11 +17,11 @@ function Main(cnf, deps, utils) {
     return model.save();
   };
 
-  const add = async (Model, params, isAdmin, _cols, { userId, clientIp }) => {
+  const add = async (Model, params, isAdmin, _cols, { creatorId, clientIp }) => {
     const cols = _cols || Model.writableCols;
     const attr = pickParams(params, cols, Model, isAdmin);
 
-    if (Model.rawAttributes.creatorId) attr.creatorId = userId;
+    if (Model.rawAttributes.creatorId) attr.creatorId = creatorId;
     if (Model.rawAttributes.clientIp) attr.clientIp = clientIp;
 
     // 如果没有设置唯一属性且开启回收站, 则直接添加
@@ -45,11 +44,11 @@ function Main(cnf, deps, utils) {
   };
 
   const TRASH_OPT = { fields: ["isDeleted", "deletorId"] };
-  const remove = async (model, userId) => {
+  const remove = async (model, deletorId) => {
     // 未开启回收站，直接删除
     if (!model.isDeleted) return model.destroy();
     // 这里不做字段是否存在的判断，无所谓
-    model.deletorId = userId;
+    model.deletorId = deletorId;
     model.isDeleted = "yes";
     // 丢进垃圾桶
     return model.save(TRASH_OPT);
