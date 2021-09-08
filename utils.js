@@ -327,9 +327,7 @@ function Utils(cnf, deps) {
     // 处理 find_in_set 方式的过滤
     if (_.isString(params[`${name}_ins`]) || _.isNumber(params[`${name}_ins`])) {
       if (!where[Op.and]) where[Op.and] = [];
-      if (!where[col]) where[col] = {};
-      if (!where[col][Op.and]) where[col][Op.and] = [];
-      where[col][Op.and].push(
+      where[Op.and].push(
         Sequelize.where(
           Sequelize.fn("FIND_IN_SET", params[`${name}_ins`], Sequelize.col(name)),
           Op.gte,
@@ -340,10 +338,9 @@ function Utils(cnf, deps) {
 
     // 处理 find_in_set 方式的过滤 _ins_and
     if (_.isString(params[`${name}_ins_and`])) {
-      if (!where[col]) where[col] = {};
-      if (!where[col][Op.and]) where[col][Op.and] = [];
+      if (!where[Op.and]) where[Op.and] = [];
       for (const v of params[`${name}_ins_and`].split(",")) {
-        where[col][Op.and].push(
+        where[Op.and].push(
           Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.gte, 1),
         );
       }
@@ -351,9 +348,8 @@ function Utils(cnf, deps) {
 
     // 处理 find_in_set 方式的过滤 _ins_or
     if (_.isString(params[`${name}_ins_or`])) {
-      if (!where[col]) where[col] = {};
-      if (!where[col][Op.and]) where[col][Op.and] = [];
-      where[col][Op.and].push({
+      if (!where[Op.and]) where[Op.and] = [];
+      where[Op.and].push({
         [Op.or]: params[`${name}_ins_or`]
           .split(",")
           .map((v) =>
@@ -364,10 +360,9 @@ function Utils(cnf, deps) {
 
     // 处理 find_in_set 方式的过滤 _ins_not
     if (_.isString(params[`${name}_ins_not`])) {
-      if (!where[col]) where[col] = {};
-      if (!where[col][Op.and]) where[col][Op.and] = [];
+      if (!where[Op.and]) where[Op.and] = [];
       for (const v of params[`${name}_ins_not`].split(",")) {
-        where[col][Op.and].push(
+        where[Op.and].push(
           Sequelize.where(Sequelize.fn("FIND_IN_SET", v.trim(), Sequelize.col(name)), Op.lt, 1),
         );
       }
